@@ -1,0 +1,97 @@
+<div id="map"></div>
+<script>
+  function initMap() {
+    var lat;
+    var lng;
+    var markers = [];
+    var disasters = <%= @disasters.to_json.html_safe %>;
+    disasters.map(function (disaster) {
+      disaster.description = disaster.description.split(". ").map(function (sentence, i) {
+        if (i == 0) {
+          return `<strong>${disaster.kind.toUpperCase()}</strong><br /><strong>${sentence}</strong>`;
+        } else {
+          return sentence;
+        }
+        return disaster;
+      }).join(". ");
+    });
+    var map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 3,
+      center: {lat: disasters[0].latitude, lng: disasters[0].longitude}
+    });
+
+    var infowindow = new google.maps.InfoWindow();
+    disasters.forEach(function (disaster) {
+      var url = "http://maps.google.com/mapfiles/ms/micons/";
+      if (disaster.latitude) {
+        if (disaster.kind.toLowerCase().match(/storm/)) {
+          disaster.icon = `${url}rainy.png`
+        }
+        switch (disaster.kind) {
+          case "Volcano":
+            disaster.icon = `${url}volcano.png`;
+            break;
+          case "Earthquake":
+            disaster.icon = `${url}earthquake.png`;
+            break;
+          case "Flood":
+            disaster.icon = `${url}water.png`;
+            break;
+          case "Wildfire":
+            disaster.icon = `${url}firedept.png`;
+            break;
+          case "Cold Event":
+            disaster.icon = `${url}snowflake_simple.png`;
+            break;
+          case "Winter Storm":
+            disaster.icon = `${url}snowflake_simple.png`;
+            break;
+          case "Tornado":
+            disaster.icon = "./img/tornado-icon.png";
+            break;
+          case "Landslide":
+            disaster.icon = `${url}fallingrocks.png`;
+            break;
+          case "Avalanche":
+            disaster.icon = `${url}fallingrocks.png`;
+            break;
+          case "Drought":
+            disaster.icon = `${url}sunny.png`;
+            break;
+          case "Heat Event":
+            disaster.icon = `${url}sunny.png`;
+            break;
+          case "Tsunami":
+            disaster.icon = `./img/tsunami-icon.png`;
+            break;
+          default:
+            disaster.icon = disaster.icon;
+        }
+        placeMarker({id: disaster.id, lat: disaster.latitude, lng: disaster.longitude, notes: disaster.description, icon: disaster.icon});
+      }
+    });
+
+    <% if ENV["RAILS_ENV"] == "test" %>
+      window.myMarkers = markers;
+    <% end %>
+
+    function placeMarker(obj) {
+      var marker = new google.maps.Marker({
+        id: obj.id,
+        position: {lat: obj.lat, lng: obj.lng},
+        notes: obj.notes,
+        icon: obj.icon,
+        map: map
+      });
+      marker.addListener("click", function (){
+        infowindow.setContent(marker.notes);
+        infowindow.open(map, marker);
+      });
+      markers.push(obj);
+    }
+
+  }
+</script>
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDNuydtXxhSe-0KXOQXtE_DwPwBVRS5dHM&callback=initMap">
+</script>
